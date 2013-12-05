@@ -194,6 +194,11 @@ UIEdgeInsets scrollViewOriginalContentInsets;
 }
 
 - (void)scrollViewDidScroll:(CGPoint)contentOffset {
+    
+    if(contentOffset.y <= 0) {
+        return;
+    }
+    
     if(self.state != SVInfiniteScrollingStateLoading && self.enabled) {
         CGFloat scrollViewContentHeight = self.scrollView.contentSize.height;
         CGFloat scrollOffsetThreshold = scrollViewContentHeight-self.scrollView.bounds.size.height;
