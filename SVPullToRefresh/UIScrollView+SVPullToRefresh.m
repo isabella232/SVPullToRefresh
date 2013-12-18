@@ -28,6 +28,7 @@ static CGFloat const SVPullToRefreshViewHeight = 60;
 @property (nonatomic, copy) void (^pullToRefreshActionHandler)(void);
 
 @property (nonatomic, strong) SVPullToRefreshArrow *arrow;
+@property (nonatomic, assign) BOOL arrowHidden;
 @property (nonatomic, strong) UIActivityIndicatorView *activityIndicatorView;
 @property (nonatomic, strong, readwrite) UILabel *titleLabel;
 @property (nonatomic, strong, readwrite) UILabel *subtitleLabel;
@@ -503,6 +504,14 @@ static char UIScrollViewPullToRefreshView;
 	return self.arrow.arrowColor; // pass through
 }
 
+- (BOOL)arrowHidden {
+  return self.arrow.hidden;
+}
+
+- (void)setArrowHidden:(BOOL)arrowHidden {
+  self.arrow.hidden = arrowHidden;
+}
+
 - (UIColor *)textColor {
     return self.titleLabel.textColor;
 }
@@ -549,9 +558,13 @@ static char UIScrollViewPullToRefreshView;
 - (void)setCustomView:(UIView *)view forState:(SVPullToRefreshState)state {
     id viewPlaceholder = view;
     
-    if(!viewPlaceholder)
-        viewPlaceholder = @"";
-    
+    if(!viewPlaceholder) {
+      viewPlaceholder = @"";
+      self.arrowHidden = YES;
+    }else{
+      self.arrowHidden = NO;
+    }
+
     if(state == SVPullToRefreshStateAll)
         [self.viewForState replaceObjectsInRange:NSMakeRange(0, 3) withObjectsFromArray:@[viewPlaceholder, viewPlaceholder, viewPlaceholder]];
     else
