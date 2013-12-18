@@ -222,10 +222,15 @@ static char UIScrollViewPullToRefreshView;
     
     id customView = [self.viewForState objectAtIndex:self.state];
     BOOL hasCustomView = [customView isKindOfClass:[UIView class]];
-    
+
+    id triggeredView = [self.viewForState objectAtIndex:SVPullToRefreshStateTriggered];
+    id stoppedView = [self.viewForState objectAtIndex:SVPullToRefreshStateStopped];
+    BOOL hasTriggeredCustomView = [triggeredView isKindOfClass:[UIView class]];
+    BOOL hasStoppedCustomView = [stoppedView isKindOfClass:[UIView class]];
+
     self.titleLabel.hidden = hasCustomView;
     self.subtitleLabel.hidden = hasCustomView;
-    self.arrow.hidden = hasCustomView;
+    self.arrow.hidden = hasCustomView || hasTriggeredCustomView || hasStoppedCustomView;
     
     if(hasCustomView) {
         [self addSubview:customView];
@@ -560,9 +565,6 @@ static char UIScrollViewPullToRefreshView;
     
     if(!viewPlaceholder) {
       viewPlaceholder = @"";
-      self.arrowHidden = YES;
-    }else{
-      self.arrowHidden = NO;
     }
 
     if(state == SVPullToRefreshStateAll)
@@ -636,12 +638,16 @@ static char UIScrollViewPullToRefreshView;
     
     switch (self.position) {
         case SVPullToRefreshPositionTop:
-            if(!self.wasTriggeredByUser)
+            [self.activityIndicatorView stopAnimating];
+            if(!self.wasTriggeredByUser) {
                 [self.scrollView setContentOffset:CGPointMake(self.scrollView.contentOffset.x, -self.originalTopInset) animated:YES];
+            }
             break;
         case SVPullToRefreshPositionBottom:
-            if(!self.wasTriggeredByUser)
+            [self.activityIndicatorView stopAnimating];
+            if(!self.wasTriggeredByUser) {
                 [self.scrollView setContentOffset:CGPointMake(self.scrollView.contentOffset.x, self.scrollView.contentSize.height - self.scrollView.bounds.size.height + self.originalBottomInset) animated:YES];
+            }
             break;
     }
 }
