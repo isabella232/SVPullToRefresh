@@ -28,6 +28,7 @@ static CGFloat const SVPullToRefreshViewHeight = 60;
 @property (nonatomic, copy) void (^pullToRefreshActionHandler)(void);
 
 @property (nonatomic, strong) SVPullToRefreshArrow *arrow;
+@property (nonatomic, assign) BOOL arrowHidden;
 @property (nonatomic, strong) UIActivityIndicatorView *activityIndicatorView;
 @property (nonatomic, strong, readwrite) UILabel *titleLabel;
 @property (nonatomic, strong, readwrite) UILabel *subtitleLabel;
@@ -221,10 +222,15 @@ static char UIScrollViewPullToRefreshView;
     
     id customView = [self.viewForState objectAtIndex:self.state];
     BOOL hasCustomView = [customView isKindOfClass:[UIView class]];
-    
+
+    id triggeredView = [self.viewForState objectAtIndex:SVPullToRefreshStateTriggered];
+    id stoppedView = [self.viewForState objectAtIndex:SVPullToRefreshStateStopped];
+    BOOL hasTriggeredCustomView = [triggeredView isKindOfClass:[UIView class]];
+    BOOL hasStoppedCustomView = [stoppedView isKindOfClass:[UIView class]];
+
     self.titleLabel.hidden = hasCustomView;
     self.subtitleLabel.hidden = hasCustomView;
-    self.arrow.hidden = hasCustomView;
+    self.arrow.hidden = hasCustomView || hasTriggeredCustomView || hasStoppedCustomView;
     
     if(hasCustomView) {
         [self addSubview:customView];
@@ -503,6 +509,14 @@ static char UIScrollViewPullToRefreshView;
 	return self.arrow.arrowColor; // pass through
 }
 
+- (BOOL)arrowHidden {
+  return self.arrow.hidden;
+}
+
+- (void)setArrowHidden:(BOOL)arrowHidden {
+  self.arrow.hidden = arrowHidden;
+}
+
 - (UIColor *)textColor {
     return self.titleLabel.textColor;
 }
@@ -549,9 +563,10 @@ static char UIScrollViewPullToRefreshView;
 - (void)setCustomView:(UIView *)view forState:(SVPullToRefreshState)state {
     id viewPlaceholder = view;
     
-    if(!viewPlaceholder)
-        viewPlaceholder = @"";
-    
+    if(!viewPlaceholder) {
+      viewPlaceholder = @"";
+    }
+
     if(state == SVPullToRefreshStateAll)
         [self.viewForState replaceObjectsInRange:NSMakeRange(0, 3) withObjectsFromArray:@[viewPlaceholder, viewPlaceholder, viewPlaceholder]];
     else
@@ -623,12 +638,16 @@ static char UIScrollViewPullToRefreshView;
     
     switch (self.position) {
         case SVPullToRefreshPositionTop:
-            if(!self.wasTriggeredByUser)
+            [self.activityIndicatorView stopAnimating];
+            if(!self.wasTriggeredByUser) {
                 [self.scrollView setContentOffset:CGPointMake(self.scrollView.contentOffset.x, -self.originalTopInset) animated:YES];
+            }
             break;
         case SVPullToRefreshPositionBottom:
-            if(!self.wasTriggeredByUser)
+            [self.activityIndicatorView stopAnimating];
+            if(!self.wasTriggeredByUser) {
                 [self.scrollView setContentOffset:CGPointMake(self.scrollView.contentOffset.x, self.scrollView.contentSize.height - self.scrollView.bounds.size.height + self.originalBottomInset) animated:YES];
+            }
             break;
     }
 }
