@@ -61,6 +61,7 @@ static CGFloat const SVPullToRefreshViewHeight = 60;
 #import <objc/runtime.h>
 
 static char UIScrollViewPullToRefreshView;
+static void * const kPullToRefreshStorageKey = (void *)&kPullToRefreshStorageKey;
 
 @implementation UIScrollView (SVPullToRefresh)
 
@@ -80,6 +81,8 @@ static char UIScrollViewPullToRefreshView;
             default:
                 return;
         }
+        yOrigin += self.pullToRefreshYOffset;
+        
         SVPullToRefreshView *view = [[SVPullToRefreshView alloc] initWithFrame:CGRectMake(0, yOrigin, self.bounds.size.width, SVPullToRefreshViewHeight)];
         view.pullToRefreshActionHandler = actionHandler;
         view.scrollView = self;
@@ -104,6 +107,19 @@ static char UIScrollViewPullToRefreshView;
 - (void)triggerPullToRefresh {
     self.pullToRefreshView.state = SVPullToRefreshStateTriggered;
     [self.pullToRefreshView startAnimating];
+}
+
+- (void)setPullToRefreshYOffset:(CGFloat)pullToRefreshYOffset
+{
+    [self willChangeValueForKey:@"pullToRefreshYOffset"];
+    objc_setAssociatedObject(self, kPullToRefreshStorageKey, @(pullToRefreshYOffset), OBJC_ASSOCIATION_COPY);
+    [self didChangeValueForKey:@"pullToRefreshYOffset"];
+}
+
+- (CGFloat)pullToRefreshYOffset
+{
+    NSNumber *value = objc_getAssociatedObject(self, kPullToRefreshStorageKey);
+    return [value floatValue];
 }
 
 - (void)setPullToRefreshView:(SVPullToRefreshView *)pullToRefreshView {
@@ -146,6 +162,7 @@ static char UIScrollViewPullToRefreshView;
                     yOrigin = self.contentSize.height;
                     break;
             }
+            yOrigin += self.pullToRefreshYOffset;
             
             self.pullToRefreshView.frame = CGRectMake(0.0f, yOrigin, self.bounds.size.width, SVPullToRefreshViewHeight);
         }
@@ -392,6 +409,7 @@ static char UIScrollViewPullToRefreshView;
                 yOrigin = MAX(self.scrollView.contentSize.height, self.scrollView.bounds.size.height);
                 break;
         }
+        yOrigin += self.scrollView.pullToRefreshYOffset;
         self.frame = CGRectMake(0, yOrigin, self.bounds.size.width, SVPullToRefreshViewHeight);
     }
     else if([keyPath isEqualToString:@"frame"])
@@ -411,6 +429,7 @@ static char UIScrollViewPullToRefreshView;
                 scrollOffsetThreshold = MAX(self.scrollView.contentSize.height - self.scrollView.bounds.size.height, 0.0f) + self.bounds.size.height + self.originalBottomInset;
                 break;
         }
+        scrollOffsetThreshold -= self.scrollView.pullToRefreshYOffset;
         
         if(!self.scrollView.isDragging && self.state == SVPullToRefreshStateTriggered)
             self.state = SVPullToRefreshStateLoading;
